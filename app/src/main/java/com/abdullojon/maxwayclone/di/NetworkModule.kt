@@ -2,11 +2,10 @@ package com.abdullojon.maxwayclone.di
 
 import android.content.Context
 import com.abdullojon.maxwayclone.BuildConfig.BASE_URL
-import com.abdullojon.maxwayclone.data.module.api.CategoriesApi
-import com.abdullojon.maxwayclone.data.module.api.ProductsApi
+import com.abdullojon.maxwayclone.data.remote.api.CategoriesApi
+import com.abdullojon.maxwayclone.data.remote.api.ProductsApi
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.Gson
-import com.google.gson.internal.GsonBuildConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
