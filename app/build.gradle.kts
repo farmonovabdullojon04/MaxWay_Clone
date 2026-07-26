@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"hhttps://erratic-quartet-smugness.ngrok-free.dev/\"")
+        buildConfigField("String", "BASE_URL", "\"https://mongrel-remnant-ventricle.ngrok-free.dev/\"")
 
     }
 
@@ -80,6 +80,7 @@ dependencies {
     //Hilt
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
@@ -97,6 +98,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.14.0")
     debugImplementation("com.github.chuckerteam.chucker:library:4.3.1")
     releaseImplementation("com.github.chuckerteam.chucker:library-no-op:4.3.1")
+
+    //icon
+    implementation("androidx.compose.material:material-icons-extended")
 
 
 }
