@@ -1,8 +1,9 @@
-package com.abdullojon.maxwayclone.presentation.main
+package com.abdullojon.maxwayclone.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,7 +35,7 @@ fun CategoryBar(
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(categories, key = { it.id }) { category ->
             val isSelected = category.id == selectedCategoryId
@@ -63,7 +64,7 @@ fun CategoryBar(
 
 @Preview(showBackground = true)
 @Composable
-private fun CategoryBarPreview() {
+private fun CategoryBarPreview(){
     val sampleCategories = listOf(
         Category("1", "Бургеры"),
         Category("2", "Сендвич"),

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -99,56 +98,46 @@ fun ProductCard(
                     color = Color.Black
                 )
             }
-        }else{
+        } else {
             Row(
-                modifier= Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .height(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF0F0F3))
-                    .padding(horizontal = 6.dp),
+                    .height(40.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier= Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .clickable{
-                            quantity=(quantity-1).coerceAtLeast(0)
+                Icon(
+                    painter = painterResource(id = minusIconRes),
+                    contentDescription = "Kamaytirish",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            quantity = (quantity - 1).coerceAtLeast(0)
                             onQuantityChanged(quantity)
-                     },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = minusIconRes),
-                        contentDescription ="Kamaytirish",
-                        modifier= Modifier.size(16.dp)
-                    )
-                }
+                        },
+                    tint = Color.Unspecified
+                )
+
                 Text(
                     text = quantity.toString(),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
                 )
-                Box(
+
+                Icon(
+                    painter = painterResource(id = plusIconRes),
+                    contentDescription = "Ko'paytirish",
                     modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .clickable {
                             quantity += 1
                             onQuantityChanged(quantity)
                         },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = plusIconRes),
-                        contentDescription = "Ko'paytirish",
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                    tint = Color.Unspecified
+                )
             }
         }
     }
