@@ -1,4 +1,4 @@
-package com.abdullojon.maxwayclone.presentation.main
+package com.abdullojon.maxwayclone.presentation.main.main
 
 
 import androidx.compose.foundation.background
@@ -38,13 +38,6 @@ import com.abdullojon.maxwayclone.presentation.components.CategoryBar
 import com.abdullojon.maxwayclone.presentation.components.ProductCard
 import com.abdullojon.maxwayclone.presentation.components.SearchBar
 
-data class BurgerItem(
-    val id: String,
-    val name: String,
-    val price: Int,
-    val imageRes: Int
-)
-
 class MainScreen : Screen {
     @Composable
     override fun Content() {
@@ -57,26 +50,12 @@ fun MainScreenContent(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel= hiltViewModel()
 ) {
-    val products = remember {
-        listOf(
-            BurgerItem("1", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("2", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("3", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("4", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("5", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("6", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("7", "Макс Бургер", 25000, R.drawable.burger_max),
-            BurgerItem("8", "Макс Бургер", 25000, R.drawable.burger_max)
-        )
-    }
     val state by viewModel.container.stateFlow.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var cart by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
-    val filteredProducts = if (searchQuery.isBlank()) {
-        products
-    } else {
-        products.filter { it.name.contains(searchQuery, ignoreCase = true) }
-    }
+    val currentCategoryName=state.categories.find {
+        it.id.toString()==state.selectedCategoryId
+    }?.name?:""
     Column(modifier = modifier
         .fillMaxSize()
         .systemBarsPadding()) {
@@ -94,7 +73,7 @@ fun MainScreenContent(
         )
         Spacer(modifier= Modifier.height(16.dp))
         Text(
-            text = "Бургеры",
+            text =currentCategoryName,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -108,22 +87,23 @@ fun MainScreenContent(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
-            items(filteredProducts.chunked(2)) { rowProducts ->
+            items(state.filteredProducts.chunked(2)) { rowProducts ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     rowProducts.forEach { product ->
                         ProductCard(
-                            imageRes = product.imageRes,
+                            imageUrl = product.image,
                             minusIconRes = R.drawable.ic_minus,
                             plusIconRes = R.drawable.ic_plus,
                             name = product.name,
-                            price = product.price,
+                            price = product.cost,
                             modifier = Modifier.weight(1f),
                             onQuantityChanged = { qty ->
                                 cart = cart.toMutableMap().apply {
-                                    if (qty <= 0) remove(product.id) else put(product.id, qty)
+                                    val key = product.id.toString()
+                                    if (qty <= 0) remove(key) else put(key, qty)
                                 }
                             }
                         )
@@ -136,18 +116,6 @@ fun MainScreenContent(
             }
         }
         BottomBar()
-    }
-}
-
-@Composable
-fun CategoryChip(name: String) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFF0F0F3))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text(text = name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
 }
 

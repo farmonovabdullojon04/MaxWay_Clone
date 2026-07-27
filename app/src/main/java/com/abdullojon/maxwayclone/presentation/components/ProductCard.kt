@@ -33,11 +33,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.R
 
 @Composable
 fun ProductCard(
-    imageRes: Int,
+    imageUrl: String,
     minusIconRes: Int,
     plusIconRes: Int,
     name: String,
@@ -62,8 +63,8 @@ fun ProductCard(
                 .background(Color(0xFFF5F5F7)),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = imageRes),
+            AsyncImage(
+                model=imageUrl,
                 contentDescription = name,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
@@ -143,14 +144,3 @@ fun ProductCard(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProductCardPreview(){
-    ProductCard(
-        imageRes = R.drawable.burger_max,
-        minusIconRes = R.drawable.ic_minus,
-        plusIconRes = R.drawable.ic_plus,
-        name = "Макс Бургер",
-        price = 25000
-    )
-}

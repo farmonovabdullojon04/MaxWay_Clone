@@ -4,18 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
-import com.abdullojon.maxwayclone.presentation.main.MainScreen
+import com.abdullojon.maxwayclone.presentation.main.main.MainScreen
 import com.abdullojon.maxwayclone.ui.theme.MaxWayCloneTheme
 import dagger.hilt.android.AndroidEntryPoint
 

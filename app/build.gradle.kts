@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"https://mongrel-remnant-ventricle.ngrok-free.dev/\"")
+        buildConfigField("String", "BASE_URL", "\" https://mongrel-remnant-ventricle.ngrok-free.dev/\"")
 
     }
 
