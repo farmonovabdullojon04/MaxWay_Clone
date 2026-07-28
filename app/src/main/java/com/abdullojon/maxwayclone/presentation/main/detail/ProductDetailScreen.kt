@@ -32,11 +32,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
 import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.R
+import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.Product
+import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+
+class ProductDetailScreen(
+    private val product: Product,
+    private val categoryTitle: String
+) : Screen {
+    @Composable
+    override fun Content() {
+        ProductDetailContent(
+            categoryTitle = categoryTitle,
+            productName = product.name,
+            description = product.description,
+            price = product.cost,
+            imageUrl = product.image,
+            onBackClick = { AppAppNavigationDispatcher.back() },
+            onAddToCartClick = { /* Savatchaga qo'shish uchun yoziladi*/ }
+        )
+    }
+}
 
 @Composable
-fun ProductDetailScreen(
+fun ProductDetailContent(
     categoryTitle: String,
     productName: String,
     description: String,
@@ -47,7 +68,7 @@ fun ProductDetailScreen(
     onAddToCartClick: (quantity: Int) -> Unit = {}
 ) {
     var quantity by remember { mutableIntStateOf(1) }
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().background(Color.White)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -159,11 +180,11 @@ fun ProductDetailScreen(
 
 @Preview(showBackground = true)
 @Composable
-private fun ProductDetailScreenPreview(){
-    ProductDetailScreen(
+private fun ProductDetailPreview(){
+    ProductDetailContent(
         categoryTitle = "Бургеры",
         productName = "Макс Бургер",
-        description = "Закручен со вкусом! Кусочки нежнейшего куриногофиле в хрустящей острой чили оригинальной панировке с сочными листьями салата, кусочками помидора и нежным соусом мы завернули в пшеничную лепешку и поджарили в тостере",
+        description = "Закручен со вкусом! Кусочки nezhneyshego...",
         price = 25000,
         imageUrl = ""
     )

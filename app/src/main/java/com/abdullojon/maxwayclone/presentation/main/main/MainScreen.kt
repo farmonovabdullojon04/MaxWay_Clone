@@ -1,9 +1,7 @@
 package com.abdullojon.maxwayclone.presentation.main.main
 
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,8 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,11 +27,16 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import com.abdullojon.maxwayclone.R
+import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
 import com.abdullojon.maxwayclone.presentation.components.BottomBar
 import com.abdullojon.maxwayclone.presentation.components.Category
 import com.abdullojon.maxwayclone.presentation.components.CategoryBar
 import com.abdullojon.maxwayclone.presentation.components.ProductCard
+import com.abdullojon.maxwayclone.presentation.components.RecommendationComponent
 import com.abdullojon.maxwayclone.presentation.components.SearchBar
+import com.abdullojon.maxwayclone.presentation.components.StoriesComponent
+import com.abdullojon.maxwayclone.presentation.main.detail.ProductDetailScreen
+import com.abdullojon.maxwayclone.presentation.main.detail.StoryDetailScreen
 
 class MainScreen : Screen {
     @Composable
@@ -44,7 +44,6 @@ class MainScreen : Screen {
         MainScreenContent()
     }
 }
-
 @Composable
 fun MainScreenContent(
     modifier: Modifier = Modifier,
@@ -63,6 +62,18 @@ fun MainScreenContent(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             onQueryChange = { searchQuery = it }
         )
+        
+        StoriesComponent(
+            stories = state.stories,
+            onItemClick = {story->
+                AppAppNavigationDispatcher.navigateTo(StoryDetailScreen(story.url))
+            }
+        )
+
+        RecommendationComponent(
+            ads = state.ads,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
         CategoryBar(
             categories = state.categories.map { Category(it.id.toString(), it.name) },
@@ -71,7 +82,7 @@ fun MainScreenContent(
                 viewModel.selectCategory(category.id)
             }
         )
-        Spacer(modifier= Modifier.height(16.dp))
+        Spacer(modifier= Modifier.height(8.dp))
         Text(
             text =currentCategoryName,
             fontSize = 18.sp,
@@ -105,6 +116,11 @@ fun MainScreenContent(
                                     val key = product.id.toString()
                                     if (qty <= 0) remove(key) else put(key, qty)
                                 }
+                            },
+                            onClick = {
+                                AppAppNavigationDispatcher.navigateTo(
+                                    ProductDetailScreen(product, currentCategoryName)
+                                )
                             }
                         )
                     }

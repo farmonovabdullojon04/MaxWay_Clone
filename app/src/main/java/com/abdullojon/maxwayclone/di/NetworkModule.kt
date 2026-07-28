@@ -2,8 +2,10 @@ package com.abdullojon.maxwayclone.di
 
 import android.content.Context
 import com.abdullojon.maxwayclone.BuildConfig.BASE_URL
-import com.abdullojon.maxwayclone.data.remote.api.CategoriesApi
-import com.abdullojon.maxwayclone.data.remote.api.ProductsApi
+import com.abdullojon.maxwayclone.data.source.remote.api.AdsApi
+import com.abdullojon.maxwayclone.data.source.remote.api.CategoriesApi
+import com.abdullojon.maxwayclone.data.source.remote.api.ProductsApi
+import com.abdullojon.maxwayclone.data.source.remote.api.StoriesApi
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.Gson
 import dagger.Module
@@ -36,6 +38,12 @@ class NetworkModule {
 
     @[Provides Singleton]
     fun providesProductsApi(retrofit: Retrofit): ProductsApi = retrofit.create<ProductsApi>()
+
+    @[Provides Singleton]
+    fun providesAdsApi(retrofit: Retrofit): AdsApi = retrofit.create<AdsApi>()
+
+    @[Provides Singleton]
+    fun providesStoriesApi(retrofit: Retrofit): StoriesApi=retrofit.create<StoriesApi>()
 
     @[Provides Singleton]
     fun providesGson()= Gson()

@@ -1,4 +1,4 @@
-package com.abdullojon.maxwayclone.data.remote.dto.response.products
+package com.abdullojon.maxwayclone.data.source.remote.dto.response.products
 
 data class ProductsByCategory(
     val id: Int,

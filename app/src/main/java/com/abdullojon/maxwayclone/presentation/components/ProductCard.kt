@@ -1,6 +1,5 @@
 package com.abdullojon.maxwayclone.presentation.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,11 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.abdullojon.maxwayclone.R
 
 @Composable
 fun ProductCard(
@@ -44,7 +41,8 @@ fun ProductCard(
     name: String,
     price: Int,
     modifier: Modifier= Modifier,
-    onQuantityChanged: (Int)-> Unit ={}
+    onQuantityChanged: (Int)-> Unit ={},
+    onClick:()-> Unit
 ){
     var quantity by remember { mutableIntStateOf(0) }
     Column(
@@ -54,6 +52,7 @@ fun ProductCard(
             .background(Color.White)
             .border(1.dp,Color(0xFFE0E0E0),RoundedCornerShape(16.dp))
             .padding(10.dp)
+            .clickable{onClick()}
     ) {
         Box(
             modifier= Modifier
