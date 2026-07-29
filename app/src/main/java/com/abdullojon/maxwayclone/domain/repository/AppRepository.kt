@@ -5,12 +5,17 @@ import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.St
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.Product
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.ProductsByCategory
+import com.abdullojon.maxwayclone.domain.model.ProductUIData
+import com.abdullojon.maxwayclone.domain.model.ProductsByCategoryUIData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface AppRepository {
+    val cartFlow: StateFlow<Map<Int, Int>>
     fun getAllCategories(): Flow<Result<List<AllCategories>>>
-    fun getProducts(): Flow<Result<List<Product>>>
-    fun getProductsByCategory(): Flow<Result<List<ProductsByCategory>>>
+    fun getProducts(): Flow<Result<List<ProductUIData>>>
+    fun getProductsByCategory(): Flow<Result<List<ProductsByCategoryUIData>>>
     fun getAds(): Flow<Result<List<Ads>>>
     fun getStories(): Flow<Result<List<Stories>>>
+    fun updateCount(productId: Int,count: Int)
 }

@@ -1,10 +1,13 @@
 package com.abdullojon.maxwayclone.presentation.main.main
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
 import com.abdullojon.maxwayclone.domain.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
@@ -18,6 +21,13 @@ class MainViewModel @Inject constructor(
         loadMainData()
         loadAds()
         loadStories()
+        observeCartChanges()
+    }
+
+    private fun observeCartChanges() {
+        repository.cartFlow.onEach {
+            loadMainData()
+        }.launchIn(viewModelScope)
     }
     fun selectCategory(id: String) = intent {
         reduce {
@@ -31,45 +41,56 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun loadMainData()=intent{
-        reduce {state.copy(isLoading = true) }
+    fun loadMainData() = intent {
+        reduce { state.copy(isLoading = true) }
         repository.getProductsByCategory().collectLatest { result ->
-            result.onSuccess { listByCategory->
-                val categories=listByCategory.map {
+            if (result.isSuccess) {
+                val listByCategory = result.getOrNull() ?: emptyList()
+                val categories = listByCategory.map {
                     AllCategories(id = it.id, name = it.name)
                 }
-                val allProducts=listByCategory.flatMap { it.products }
-                val firstCatId=categories.firstOrNull()?.id?.toString()
-                val initialFiltered=if(firstCatId!=null){
-                    allProducts.filter { it.categoryID.toString()==firstCatId }
-                }else allProducts
+                val allProducts = listByCategory.flatMap { it.products }
+                val currentSelectedId = state.selectedCategoryId ?: categories.firstOrNull()?.id?.toString()
+                val filtered = if (currentSelectedId != null) {
+                    allProducts.filter { it.categoryID.toString() == currentSelectedId }
+                } else allProducts
+                
                 reduce {
                     state.copy(
                         isLoading = false,
-                        categories=categories,
-                        allProducts=allProducts,
-                        filteredProducts = initialFiltered,
-                        selectedProductId = firstCatId,
+                        categories = categories,
+                        allProducts = allProducts,
+                        filteredProducts = filtered,
+                        selectedCategoryId = currentSelectedId,
                         error = null
                     )
                 }
-            }.onFailure { throwable ->
-                reduce { state.copy(isLoading = false,error=throwable.message) }
+            } else {
+                val throwable = result.exceptionOrNull()
+                reduce { state.copy(isLoading = false, error = throwable?.message) }
             }
         }
     }
-    fun loadAds()=intent{
+
+    fun loadAds() = intent {
         repository.getAds().collectLatest { result ->
-            result.onSuccess { list->
+            if (result.isSuccess) {
+                val list = result.getOrNull() ?: emptyList()
                 reduce { state.copy(ads = list) }
             }
         }
     }
-    fun loadStories()=intent{
+
+    fun loadStories() = intent {
         repository.getStories().collectLatest { result ->
-            result.onSuccess { list->
+            if (result.isSuccess) {
+                val list = result.getOrNull() ?: emptyList()
                 reduce { state.copy(stories = list) }
             }
         }
+    }
+    fun updateProductCount(id: Int,newCount: Int)=intent{
+        repository.updateCount(id,newCount)
+        loadMainData()
     }
 }

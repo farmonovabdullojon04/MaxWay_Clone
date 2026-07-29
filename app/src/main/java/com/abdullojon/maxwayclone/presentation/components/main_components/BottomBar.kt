@@ -1,4 +1,4 @@
-package com.abdullojon.maxwayclone.presentation.components
+package com.abdullojon.maxwayclone.presentation.components.main_components
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.size
@@ -23,7 +23,6 @@ data class BottomBarItem(
     val label: String,
     val iconRes: Int
 )
-
 @Composable
 fun BottomBar(
     modifier: Modifier= Modifier

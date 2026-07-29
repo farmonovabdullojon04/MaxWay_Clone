@@ -1,4 +1,4 @@
-package com.abdullojon.maxwayclone.presentation.components
+package com.abdullojon.maxwayclone.presentation.components.main_components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,7 +13,7 @@ import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Ads
 
 @Composable
-fun RecommendationComponent(
+fun BannerComponent(
     modifier: Modifier = Modifier,
     ads: List<Ads>
 ) {

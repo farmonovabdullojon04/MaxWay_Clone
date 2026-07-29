@@ -18,10 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,27 +30,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.R
-import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.Product
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.presentation.main.main.MainViewModel
 
 class ProductDetailScreen(
-    private val product: Product,
+    private val productId: Int,
     private val categoryTitle: String
 ) : Screen {
     @Composable
     override fun Content() {
-        ProductDetailContent(
-            categoryTitle = categoryTitle,
-            productName = product.name,
-            description = product.description,
-            price = product.cost,
-            imageUrl = product.image,
-            onBackClick = { AppAppNavigationDispatcher.back() },
-            onAddToCartClick = { /* Savatchaga qo'shish uchun yoziladi*/ }
-        )
+        val viewModel: MainViewModel = hiltViewModel()
+        val state by viewModel.container.stateFlow.collectAsState()
+        val product = state.allProducts.find { it.id == productId }
+        if (product != null) {
+            ProductDetailContent(
+                categoryTitle = categoryTitle,
+                productName = product.name,
+                description = product.description,
+                price = product.cost,
+                imageUrl = product.image,
+                count = product.count,
+                onBackClick = { AppAppNavigationDispatcher.back() },
+                onCountChange = { newCount ->
+                    viewModel.updateProductCount(productId, newCount)
+                }
+            )
+        }
     }
 }
 
@@ -63,11 +70,11 @@ fun ProductDetailContent(
     description: String,
     price: Int,
     imageUrl: String,
+    count: Int,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onAddToCartClick: (quantity: Int) -> Unit = {}
+    onCountChange: (Int) -> Unit = {}
 ) {
-    var quantity by remember { mutableIntStateOf(1) }
     Column(modifier = modifier.fillMaxSize().background(Color.White)) {
         Box(
             modifier = Modifier
@@ -133,59 +140,62 @@ fun ProductDetailContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .height(48.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_minus),
-                    contentDescription = "Kamaytirish",
+            if (count == 0) {
+                Row(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clickable { quantity = (quantity - 1).coerceAtLeast(1) }
-                )
-                Text(
-                    text = quantity.toString(),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.ic_plus),
-                    contentDescription = "Ko'paytirish",
+                        .weight(1f)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF51267D))
+                        .clickable { onCountChange(1) }
+                        .padding(horizontal = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "Добавить ($price сум)", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+            } else {
+                Row(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clickable { quantity += 1 }
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF51267D))
-                    .clickable { onAddToCartClick(quantity) }
-                    .padding(horizontal = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "Добавить", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                Text(text = "${price * quantity} сум", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        .height(48.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_minus),
+                        contentDescription = "Kamaytirish",
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clickable { onCountChange((count - 1).coerceAtLeast(0)) }
+                    )
+                    Text(
+                        text = count.toString(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_plus),
+                        contentDescription = "Ko'paytirish",
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clickable { onCountChange(count + 1) }
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF51267D))
+                        .padding(horizontal = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Добавить", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "${price * count} сум", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ProductDetailPreview(){
-    ProductDetailContent(
-        categoryTitle = "Бургеры",
-        productName = "Макс Бургер",
-        description = "Закручен со вкусом! Кусочки nezhneyshego...",
-        price = 25000,
-        imageUrl = ""
-    )
 }

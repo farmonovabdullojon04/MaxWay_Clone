@@ -28,13 +28,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import com.abdullojon.maxwayclone.R
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
-import com.abdullojon.maxwayclone.presentation.components.BottomBar
-import com.abdullojon.maxwayclone.presentation.components.Category
-import com.abdullojon.maxwayclone.presentation.components.CategoryBar
-import com.abdullojon.maxwayclone.presentation.components.ProductCard
-import com.abdullojon.maxwayclone.presentation.components.RecommendationComponent
-import com.abdullojon.maxwayclone.presentation.components.SearchBar
-import com.abdullojon.maxwayclone.presentation.components.StoriesComponent
+import com.abdullojon.maxwayclone.presentation.basket.BasketScreen
+import com.abdullojon.maxwayclone.presentation.basket.BasketScreenContent
+import com.abdullojon.maxwayclone.presentation.components.main_components.BannerComponent
+import com.abdullojon.maxwayclone.presentation.components.main_components.BottomBar
+import com.abdullojon.maxwayclone.presentation.components.main_components.CartSummaryBar
+import com.abdullojon.maxwayclone.presentation.components.main_components.Category
+import com.abdullojon.maxwayclone.presentation.components.main_components.CategoryBar
+import com.abdullojon.maxwayclone.presentation.components.main_components.ProductCard
+import com.abdullojon.maxwayclone.presentation.components.main_components.SearchBar
+import com.abdullojon.maxwayclone.presentation.components.main_components.StoriesComponent
 import com.abdullojon.maxwayclone.presentation.main.detail.ProductDetailScreen
 import com.abdullojon.maxwayclone.presentation.main.detail.StoryDetailScreen
 
@@ -47,14 +50,17 @@ class MainScreen : Screen {
 @Composable
 fun MainScreenContent(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel= hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val state by viewModel.container.stateFlow.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    var cart by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
-    val currentCategoryName=state.categories.find {
-        it.id.toString()==state.selectedCategoryId
-    }?.name?:""
+    val currentCategoryName = state.categories.find {
+        it.id.toString() == state.selectedCategoryId
+    }?.name ?: ""
+
+    val totalItems = state.allProducts.sumOf { it.count }
+    val totalPrice = state.allProducts.sumOf { it.count * it.cost }
+
     Column(modifier = modifier
         .fillMaxSize()
         .systemBarsPadding()) {
@@ -62,15 +68,16 @@ fun MainScreenContent(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             onQueryChange = { searchQuery = it }
         )
-        
         StoriesComponent(
             stories = state.stories,
-            onItemClick = {story->
-                AppAppNavigationDispatcher.navigateTo(StoryDetailScreen(story.url))
+            onItemClick = {selectedStory->
+                val index=state.stories.indexOf(selectedStory)
+                AppAppNavigationDispatcher.navigateTo(
+                    StoryDetailScreen(stories = state.stories, initialIndex = index)
+                )
             }
         )
-
-        RecommendationComponent(
+        BannerComponent(
             ads = state.ads,
             modifier = Modifier.padding(vertical = 8.dp)
         )
@@ -106,20 +113,18 @@ fun MainScreenContent(
                     rowProducts.forEach { product ->
                         ProductCard(
                             imageUrl = product.image,
+                            count = product.count,
                             minusIconRes = R.drawable.ic_minus,
                             plusIconRes = R.drawable.ic_plus,
                             name = product.name,
                             price = product.cost,
                             modifier = Modifier.weight(1f),
-                            onQuantityChanged = { qty ->
-                                cart = cart.toMutableMap().apply {
-                                    val key = product.id.toString()
-                                    if (qty <= 0) remove(key) else put(key, qty)
-                                }
+                            onCountChange = { newCount ->
+                                viewModel.updateProductCount(product.id, newCount)
                             },
                             onClick = {
                                 AppAppNavigationDispatcher.navigateTo(
-                                    ProductDetailScreen(product, currentCategoryName)
+                                    ProductDetailScreen(product.id, currentCategoryName)
                                 )
                             }
                         )
@@ -131,6 +136,11 @@ fun MainScreenContent(
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
+        CartSummaryBar(
+            totalItems = totalItems,
+            totalPrice = totalPrice,
+            onClick = { AppAppNavigationDispatcher.navigateTo(BasketScreen()) }
+        )
         BottomBar()
     }
 }

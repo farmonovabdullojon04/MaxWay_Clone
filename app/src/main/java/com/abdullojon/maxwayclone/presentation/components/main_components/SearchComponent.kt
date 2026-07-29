@@ -1,4 +1,4 @@
-package com.abdullojon.maxwayclone.presentation.components
+package com.abdullojon.maxwayclone.presentation.components.main_components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
