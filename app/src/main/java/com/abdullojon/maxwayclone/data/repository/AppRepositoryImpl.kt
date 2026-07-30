@@ -8,8 +8,6 @@ import com.abdullojon.maxwayclone.data.source.remote.api.StoriesApi
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Ads
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Stories
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
-import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.Product
-import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.ProductsByCategory
 import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.domain.model.ProductsByCategoryUIData
 import com.abdullojon.maxwayclone.domain.repository.AppRepository
@@ -19,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class AppRepositoryImpl @Inject constructor(
@@ -58,6 +57,9 @@ class AppRepositoryImpl @Inject constructor(
     override fun getProductsByCategory(): Flow<Result<List<ProductsByCategoryUIData>>> =flow {
         val response=apiProduct.getProductsByCategory()
         if (response.isSuccessful && response.body()!=null){
+
+            val allApiProducts=response.body()!!.data.flatMap { it.products }
+
            val uiData=response.body()!!.data.map{apiCategory->
                ProductsByCategoryUIData(
                    id = apiCategory.id,
@@ -65,12 +67,10 @@ class AppRepositoryImpl @Inject constructor(
                    products = apiCategory.products.map { it.toUIData(cartFlow.value.getOrDefault(it.id, 0)) }
                )
            }
+            products.clear()
+            products.addAll(allApiProducts.map { it.toUIData() })
             emit(Result.success(uiData))
-        }else{
-            emit(Result.failure(Exception("Xatolik:${response.code()}")))
         }
-    }.catch { e->
-        emit(Result.failure(e))
     }
 
     override fun getAds(): Flow<Result<List<Ads>>> = flow {
@@ -98,5 +98,26 @@ class AppRepositoryImpl @Inject constructor(
         else currentMap[productId] = count
         _cartFlow.value = currentMap
     }
+
+    override fun getBasketProducts(): Flow<List<ProductUIData>> = cartFlow.map {currentCart->
+        products.filter{currentCart.containsKey(it.id)}
+            .map { it.copy(count = currentCart[it.id]?:0) }
+    }
+
+    override fun clearCart() {
+        _cartFlow.value=emptyMap()
+    }
+
+    override fun searchProducts(query: String): Flow<Result<List<ProductUIData>>> =flow{
+        val response=apiProduct.searchProducts(query)
+        if (response.isSuccessful && response.body()!=null){
+            val data=response.body()!!.data.map {
+                it.toUIData(cartFlow.value.getOrDefault(it.id,0))
+            }
+            emit(Result.success(data))
+        }else{
+            emit(Result.failure(Exception("Qidiruvda xatolik")))
+        }
+    }.catch { emit(Result.failure(it)) }
 
 }

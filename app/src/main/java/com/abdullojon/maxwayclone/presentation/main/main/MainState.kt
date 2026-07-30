@@ -15,5 +15,7 @@ data class MainState(
     val products: List<ProductUIData> = emptyList(),
     val selectedProductId: String? = null,
     val ads: List<Ads> = emptyList(),
-    val stories: List<Stories> = emptyList()
+    val stories: List<Stories> = emptyList(),
+    val isSearching: Boolean = false,
+    val searchQuery: String = ""
 )

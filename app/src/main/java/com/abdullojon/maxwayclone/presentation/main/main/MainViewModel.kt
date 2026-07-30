@@ -93,4 +93,23 @@ class MainViewModel @Inject constructor(
         repository.updateCount(id,newCount)
         loadMainData()
     }
+
+    fun onSearchQueryChange(newQuery: String) = intent {
+        reduce { state.copy(searchQuery = newQuery, isSearching = newQuery.isNotEmpty()) }
+        if (newQuery.isBlank()) {
+            loadMainData()
+            return@intent
+        }
+        repository.searchProducts(newQuery).collectLatest { result ->
+            if (result.isSuccess) {
+                val list = result.getOrNull() ?: emptyList()
+                reduce { state.copy(filteredProducts = list) }
+            }
+        }
+    }
+
+    fun onSearchCancel() = intent {
+        reduce { state.copy(searchQuery = "", isSearching = false) }
+        loadMainData()
+    }
 }

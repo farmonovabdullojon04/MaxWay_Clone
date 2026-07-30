@@ -18,4 +18,7 @@ interface AppRepository {
     fun getAds(): Flow<Result<List<Ads>>>
     fun getStories(): Flow<Result<List<Stories>>>
     fun updateCount(productId: Int,count: Int)
+    fun getBasketProducts(): Flow<List<ProductUIData>>
+    fun clearCart()
+    fun searchProducts(query: String): Flow<Result<List<ProductUIData>>>
 }

@@ -18,12 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.R
+import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
 
 class BasketScreen : Screen {
@@ -34,16 +35,12 @@ class BasketScreen : Screen {
 }
 
 @Composable
-fun BasketScreenContent() {
-    val basketItems = remember {
-        mutableStateListOf(
-            BasketItem("1", "Клаб-сэндвич \"Янгилик\"", 19000, 1, ""),
-            BasketItem("2", "Макс Бургер", 19000, 1, "")
-        )
-    }
-
-    val totalPrice = basketItems.sumOf { it.price * it.quantity }
-
+fun BasketScreenContent(
+    viewModel: BasketViewModel = hiltViewModel()
+) {
+    val state by viewModel.container.stateFlow.collectAsState()
+    val totalPrice = state.items.sumOf { it.cost * it.count }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,13 +72,17 @@ fun BasketScreenContent() {
             Icon(
                 painter = painterResource(id=R.drawable.delete),
                 contentDescription = "Clear Basket",
-                tint = Color.Gray,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { basketItems.clear() }
+                    .clickable { 
+                        if (state.items.isNotEmpty())
+                            showDeleteDialog=true
+                    }
             )
         }
+
         Spacer(modifier = Modifier.height(16.dp))
+
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -92,22 +93,17 @@ fun BasketScreenContent() {
             LazyColumn(
                 modifier = Modifier.weight(1f, fill = false)
             ) {
-                items(basketItems) { item ->
+                items(state.items, key = { it.id }) { item ->
                     BasketProductItem(
                         item = item,
                         onQuantityChange = { newQty ->
-                            val index = basketItems.indexOf(item)
-                            if (newQty > 0) {
-                                basketItems[index] = item.copy(quantity = newQty)
-                            } else {
-                                basketItems.removeAt(index)
-                            }
+                            viewModel.updateCount(item.id, newQty)
                         }
                     )
                 }
             }
 
-            if (basketItems.isNotEmpty()) {
+            if (state.items.isNotEmpty()) {
                 Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                 Row(
                     modifier = Modifier
@@ -131,6 +127,7 @@ fun BasketScreenContent() {
                 }
             }
         }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -141,8 +138,8 @@ fun BasketScreenContent() {
                     .fillMaxWidth()
                     .height(54.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(if (basketItems.isNotEmpty()) Color(0xFF51267D) else Color.Gray)
-                    .clickable(enabled = basketItems.isNotEmpty()) { /* Buyurtma berish uchun joy */ },
+                    .background(if (state.items.isNotEmpty()) Color(0xFF51267D) else Color.Gray)
+                    .clickable(enabled = state.items.isNotEmpty()) { /* Buyurtma berish */ },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -154,11 +151,54 @@ fun BasketScreenContent() {
             }
         }
     }
+    if (showDeleteDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(text = "Внимание!",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            },
+            text = {
+                Text(text = "Вы уверены, что хотите очистить корзину?",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth())
+            },
+            confirmButton = {
+                androidx.compose.material3.Button(
+                    onClick = {
+                        viewModel.clearBasket()
+                        showDeleteDialog = false
+                    },
+                    modifier = Modifier.fillMaxWidth(0.45f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.ButtonDefaults
+                        .buttonColors(containerColor = Color(0xFF51267D))
+                ) {
+                    Text("Да")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.Button(
+                    onClick = { showDeleteDialog = false },
+                    modifier = Modifier.fillMaxWidth(0.45f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.ButtonDefaults
+                        .buttonColors(containerColor = Color(0xFFF0F0F3))
+                ) {
+                    Text("Отменить", color = Color.Black)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
 }
 
 @Composable
 fun BasketProductItem(
-    item: BasketItem,
+    item: ProductUIData,
     onQuantityChange: (Int) -> Unit
 ) {
     Row(
@@ -168,7 +208,7 @@ fun BasketProductItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = item.imageUrl,
+            model = item.image,
             error = painterResource(id = R.drawable.burger_max),
             contentDescription = item.name,
             contentScale = ContentScale.Fit,
@@ -193,14 +233,16 @@ fun BasketProductItem(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "${item.price} сум",
+                    text = "${item.cost} сум",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF6C2BD9),
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
+
             Spacer(modifier = Modifier.height(12.dp))
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -210,10 +252,10 @@ fun BasketProductItem(
                     contentDescription = "Minus",
                     modifier = Modifier
                         .size(32.dp)
-                        .clickable { onQuantityChange(item.quantity - 1) }
+                        .clickable { onQuantityChange(item.count - 1) }
                 )
                 Text(
-                    text = item.quantity.toString(),
+                    text = item.count.toString(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -222,23 +264,9 @@ fun BasketProductItem(
                     contentDescription = "Plus",
                     modifier = Modifier
                         .size(32.dp)
-                        .clickable { onQuantityChange(item.quantity + 1) }
+                        .clickable { onQuantityChange(item.count + 1) }
                 )
             }
         }
     }
-}
-
-data class BasketItem(
-    val id: String,
-    val name: String,
-    val price: Int,
-    val quantity: Int,
-    val imageUrl: String
-)
-
-@Preview(showBackground = true)
-@Composable
-private fun BasketScreenPreview() {
-    BasketScreenContent()
 }

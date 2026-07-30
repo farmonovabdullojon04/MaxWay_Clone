@@ -29,14 +29,15 @@ import cafe.adriel.voyager.core.screen.Screen
 import com.abdullojon.maxwayclone.R
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
 import com.abdullojon.maxwayclone.presentation.basket.BasketScreen
-import com.abdullojon.maxwayclone.presentation.basket.BasketScreenContent
 import com.abdullojon.maxwayclone.presentation.components.main_components.BannerComponent
 import com.abdullojon.maxwayclone.presentation.components.main_components.BottomBar
 import com.abdullojon.maxwayclone.presentation.components.main_components.CartSummaryBar
 import com.abdullojon.maxwayclone.presentation.components.main_components.Category
 import com.abdullojon.maxwayclone.presentation.components.main_components.CategoryBar
+import com.abdullojon.maxwayclone.presentation.components.main_components.EmptySearchPlaceholder
 import com.abdullojon.maxwayclone.presentation.components.main_components.ProductCard
 import com.abdullojon.maxwayclone.presentation.components.main_components.SearchBar
+import com.abdullojon.maxwayclone.presentation.components.main_components.SearchResultItem
 import com.abdullojon.maxwayclone.presentation.components.main_components.StoriesComponent
 import com.abdullojon.maxwayclone.presentation.main.detail.ProductDetailScreen
 import com.abdullojon.maxwayclone.presentation.main.detail.StoryDetailScreen
@@ -66,62 +67,22 @@ fun MainScreenContent(
         .systemBarsPadding()) {
         SearchBar(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            onQueryChange = { searchQuery = it }
-        )
-        StoriesComponent(
-            stories = state.stories,
-            onItemClick = {selectedStory->
-                val index=state.stories.indexOf(selectedStory)
-                AppAppNavigationDispatcher.navigateTo(
-                    StoryDetailScreen(stories = state.stories, initialIndex = index)
-                )
+            onQueryChange = { text ->
+                viewModel.onSearchQueryChange(text)
+            },
+            onCancel = {
+                viewModel.onSearchCancel()
             }
         )
-        BannerComponent(
-            ads = state.ads,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
 
-        CategoryBar(
-            categories = state.categories.map { Category(it.id.toString(), it.name) },
-            selectedCategoryId = state.selectedCategoryId,
-            onCategorySelected = { category ->
-                viewModel.selectCategory(category.id)
-            }
-        )
-        Spacer(modifier= Modifier.height(8.dp))
-        Text(
-            text =currentCategoryName,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            items(state.filteredProducts.chunked(2)) { rowProducts ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    rowProducts.forEach { product ->
-                        ProductCard(
-                            imageUrl = product.image,
-                            count = product.count,
-                            minusIconRes = R.drawable.ic_minus,
-                            plusIconRes = R.drawable.ic_plus,
-                            name = product.name,
-                            price = product.cost,
-                            modifier = Modifier.weight(1f),
-                            onCountChange = { newCount ->
-                                viewModel.updateProductCount(product.id, newCount)
-                            },
+        if (state.isSearching) {
+            if (state.filteredProducts.isEmpty()) {
+                EmptySearchPlaceholder()
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(state.filteredProducts) { product ->
+                        SearchResultItem(
+                            product = product,
                             onClick = {
                                 AppAppNavigationDispatcher.navigateTo(
                                     ProductDetailScreen(product.id, currentCategoryName)
@@ -129,13 +90,79 @@ fun MainScreenContent(
                             }
                         )
                     }
-                    if (rowProducts.size == 1) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+            }
+        } else {
+            StoriesComponent(
+                stories = state.stories,
+                onItemClick = { selectedStory ->
+                    val index = state.stories.indexOf(selectedStory)
+                    AppAppNavigationDispatcher.navigateTo(
+                        StoryDetailScreen(stories = state.stories, initialIndex = index)
+                    )
+                }
+            )
+            BannerComponent(
+                ads = state.ads,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            CategoryBar(
+                categories = state.categories.map { Category(it.id.toString(), it.name) },
+                selectedCategoryId = state.selectedCategoryId,
+                onCategorySelected = { category ->
+                    viewModel.selectCategory(category.id)
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = currentCategoryName,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                items(state.filteredProducts.chunked(2)) { rowProducts ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowProducts.forEach { product ->
+                            ProductCard(
+                                imageUrl = product.image,
+                                count = product.count,
+                                minusIconRes = R.drawable.ic_minus,
+                                plusIconRes = R.drawable.ic_plus,
+                                name = product.name,
+                                price = product.cost,
+                                modifier = Modifier.weight(1f),
+                                onCountChange = { newCount ->
+                                    viewModel.updateProductCount(product.id, newCount)
+                                },
+                                onClick = {
+                                    AppAppNavigationDispatcher.navigateTo(
+                                        ProductDetailScreen(product.id, currentCategoryName)
+                                    )
+                                }
+                            )
+                        }
+                        if (rowProducts.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
+
         CartSummaryBar(
             totalItems = totalItems,
             totalPrice = totalPrice,
