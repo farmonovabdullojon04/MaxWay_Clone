@@ -3,8 +3,6 @@ package com.abdullojon.maxwayclone.domain.repository
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Ads
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Stories
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
-import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.Product
-import com.abdullojon.maxwayclone.data.source.remote.dto.response.products.ProductsByCategory
 import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.domain.model.ProductsByCategoryUIData
 import kotlinx.coroutines.flow.Flow
@@ -21,4 +19,8 @@ interface AppRepository {
     fun getBasketProducts(): Flow<List<ProductUIData>>
     fun clearCart()
     fun searchProducts(query: String): Flow<Result<List<ProductUIData>>>
+    fun isUserLoggedIn(): Boolean
+    suspend fun register(phone: String): Result<Unit>
+    suspend fun verify(phone: String,code: Int): Result<String>
+    suspend fun repeat(phone: String): Result<Unit>
 }

@@ -26,6 +26,7 @@ import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.R
 import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.presentation.register.LoginPhoneScreen
 
 class BasketScreen : Screen {
     @Composable
@@ -39,6 +40,7 @@ fun BasketScreenContent(
     viewModel: BasketViewModel = hiltViewModel()
 ) {
     val state by viewModel.container.stateFlow.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val totalPrice = state.items.sumOf { it.cost * it.count }
     var showDeleteDialog by remember { mutableStateOf(false) }
     Column(
@@ -139,7 +141,17 @@ fun BasketScreenContent(
                     .height(54.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(if (state.items.isNotEmpty()) Color(0xFF51267D) else Color.Gray)
-                    .clickable(enabled = state.items.isNotEmpty()) { /* Buyurtma berish */ },
+                    .clickable(enabled = state.items.isNotEmpty()) {
+                        if (viewModel.isUserLoggedIn()) {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Buyurtma berish oynasi hali tayyor emas",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            AppAppNavigationDispatcher.navigateTo(LoginPhoneScreen())
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Text(

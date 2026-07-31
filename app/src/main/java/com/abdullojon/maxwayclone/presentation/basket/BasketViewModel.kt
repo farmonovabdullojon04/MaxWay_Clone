@@ -35,4 +35,6 @@ class BasketViewModel @Inject constructor(
     fun clearBasket(){
         repository.clearCart()
     }
+
+    fun isUserLoggedIn(): Boolean = repository.isUserLoggedIn()
 }

@@ -1,10 +1,15 @@
 package com.abdullojon.maxwayclone.data.repository
 
 import com.abdullojon.maxwayclone.data.mapper.toUIData
-import com.abdullojon.maxwayclone.data.source.remote.api.AdsApi
-import com.abdullojon.maxwayclone.data.source.remote.api.CategoriesApi
-import com.abdullojon.maxwayclone.data.source.remote.api.ProductsApi
-import com.abdullojon.maxwayclone.data.source.remote.api.StoriesApi
+import com.abdullojon.maxwayclone.data.source.local.preference.Prefs
+import com.abdullojon.maxwayclone.data.source.remote.api.auth_api.AuthApi
+import com.abdullojon.maxwayclone.data.source.remote.api.main_api.AdsApi
+import com.abdullojon.maxwayclone.data.source.remote.api.main_api.CategoriesApi
+import com.abdullojon.maxwayclone.data.source.remote.api.main_api.ProductsApi
+import com.abdullojon.maxwayclone.data.source.remote.api.main_api.StoriesApi
+import com.abdullojon.maxwayclone.data.source.remote.dto.request.RegisterRequest
+import com.abdullojon.maxwayclone.data.source.remote.dto.request.RepeatRequest
+import com.abdullojon.maxwayclone.data.source.remote.dto.request.VerifyRequest
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Ads
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Stories
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
@@ -24,7 +29,9 @@ class AppRepositoryImpl @Inject constructor(
     private val apiCategory: CategoriesApi,
     private val apiProduct: ProductsApi,
     private val adsApi: AdsApi,
-    private val storiesApi: StoriesApi
+    private val storiesApi: StoriesApi,
+    private val authApi: AuthApi,
+    private val prefs: Prefs
 ): AppRepository {
     private val _cartFlow = MutableStateFlow<Map<Int, Int>>(emptyMap())
     override val cartFlow: StateFlow<Map<Int, Int>> = _cartFlow.asStateFlow()
@@ -92,7 +99,10 @@ class AppRepositoryImpl @Inject constructor(
         }
     }.catch { emit(Result.failure(it))}
 
-    override fun updateCount(productId: Int, count: Int) {
+    override fun updateCount(
+        productId: Int,
+        count: Int
+    ) {
         val currentMap = cartFlow.value.toMutableMap()
         if (count <= 0) currentMap.remove(productId)
         else currentMap[productId] = count
@@ -108,7 +118,9 @@ class AppRepositoryImpl @Inject constructor(
         _cartFlow.value=emptyMap()
     }
 
-    override fun searchProducts(query: String): Flow<Result<List<ProductUIData>>> =flow{
+    override fun searchProducts(
+        query: String
+    ): Flow<Result<List<ProductUIData>>> =flow{
         val response=apiProduct.searchProducts(query)
         if (response.isSuccessful && response.body()!=null){
             val data=response.body()!!.data.map {
@@ -119,5 +131,37 @@ class AppRepositoryImpl @Inject constructor(
             emit(Result.failure(Exception("Qidiruvda xatolik")))
         }
     }.catch { emit(Result.failure(it)) }
+
+    override fun isUserLoggedIn(): Boolean=prefs.isLoggedIn
+
+    override suspend fun register(
+        phone: String
+    ): Result<Unit> {
+        val response=authApi.register(RegisterRequest(phone))
+        return if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(Exception("Xatolik: ${response.code()}"))
+    }
+
+    override suspend fun verify(
+        phone: String,
+        code: Int
+    ): Result<String> {
+        val response=authApi.verify(VerifyRequest(phone,code))
+        if (response.isSuccessful && response.body()!=null){
+            val token = response.body()!!.data.token
+            prefs.token = token
+            prefs.isLoggedIn = true
+            return Result.success(token)
+        }
+        return Result.failure(Exception("Tasdiqlashda xatolik"))
+    }
+
+    override suspend fun repeat(
+        phone: String
+    ): Result<Unit> {
+       val response=authApi.repeat(RepeatRequest(phone))
+        return if (response.isSuccessful) Result.success(Unit)
+        else Result.failure(Exception("Qayta yuborishda xatolik"))
+    }
 
 }
