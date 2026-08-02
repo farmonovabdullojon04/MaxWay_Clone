@@ -13,4 +13,8 @@ class Prefs @Inject constructor(context: Context){
     var isLoggedIn: Boolean
         get() = prefs.getBoolean("is_logged_in",false)
         set(value) = prefs.edit().putBoolean("is_logged_in",value).apply()
+
+    fun clearUser() {
+        prefs.edit().clear().apply()
+    }
 }

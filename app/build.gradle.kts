@@ -105,4 +105,7 @@ dependencies {
     //splash
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    //commandiron/WheelPickerCompose
+    implementation("com.github.commandiron:WheelPickerCompose:1.1.11")
+
 }

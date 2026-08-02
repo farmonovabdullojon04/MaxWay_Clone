@@ -4,10 +4,12 @@ import android.content.Context
 import com.abdullojon.maxwayclone.BuildConfig.BASE_URL
 import com.abdullojon.maxwayclone.data.source.local.preference.Prefs
 import com.abdullojon.maxwayclone.data.source.remote.api.auth_api.AuthApi
+import com.abdullojon.maxwayclone.data.source.remote.api.branch_api.BranchesApi
 import com.abdullojon.maxwayclone.data.source.remote.api.main_api.AdsApi
 import com.abdullojon.maxwayclone.data.source.remote.api.main_api.CategoriesApi
 import com.abdullojon.maxwayclone.data.source.remote.api.main_api.ProductsApi
 import com.abdullojon.maxwayclone.data.source.remote.api.main_api.StoriesApi
+import com.abdullojon.maxwayclone.data.source.remote.api.order_api.OrderApi
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.Gson
 import dagger.Module
@@ -48,11 +50,18 @@ class NetworkModule {
     fun providesStoriesApi(retrofit: Retrofit): StoriesApi=retrofit.create<StoriesApi>()
 
     @[Provides Singleton]
+    fun providesBranchesApi(retrofit: Retrofit): BranchesApi = retrofit.create<BranchesApi>()
+
+    @[Provides Singleton]
     fun providesGson()= Gson()
 
     @Provides
     @Singleton
     fun providesAuthApi(retrofit: Retrofit): AuthApi=retrofit.create<AuthApi>()
+
+    @Provides
+    @Singleton
+    fun providesOrderApi(retrofit: Retrofit): OrderApi = retrofit.create<OrderApi>()
 
     @Provides
     @Singleton

@@ -26,6 +26,7 @@ import coil.compose.AsyncImage
 import com.abdullojon.maxwayclone.R
 import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.presentation.order.CheckoutScreen
 import com.abdullojon.maxwayclone.presentation.register.LoginPhoneScreen
 
 class BasketScreen : Screen {
@@ -143,11 +144,7 @@ fun BasketScreenContent(
                     .background(if (state.items.isNotEmpty()) Color(0xFF51267D) else Color.Gray)
                     .clickable(enabled = state.items.isNotEmpty()) {
                         if (viewModel.isUserLoggedIn()) {
-                            android.widget.Toast.makeText(
-                                context,
-                                "Buyurtma berish oynasi hali tayyor emas",
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
+                            AppAppNavigationDispatcher.navigateTo(CheckoutScreen())
                         } else {
                             AppAppNavigationDispatcher.navigateTo(LoginPhoneScreen())
                         }

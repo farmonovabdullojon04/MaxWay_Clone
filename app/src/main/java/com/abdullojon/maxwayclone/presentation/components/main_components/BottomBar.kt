@@ -18,6 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.abdullojon.maxwayclone.R
+import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.presentation.main.main.MainScreen
+import com.abdullojon.maxwayclone.presentation.order.MyOrdersScreen
+import com.abdullojon.maxwayclone.presentation.profile.ProfileScreen
 
 data class BottomBarItem(
     val label: String,
@@ -42,7 +46,12 @@ fun BottomBar(
                 selected = selectedIndex == index,
                 onClick = {
                     selectedIndex = index
-                    Toast.makeText(context, "Bosildi: ${item.label}", Toast.LENGTH_SHORT).show()
+                    when (index) {
+                        0 -> AppAppNavigationDispatcher.navigateTo(MainScreen())
+                        1 -> AppAppNavigationDispatcher.navigateTo(MyOrdersScreen())
+                        2 -> AppAppNavigationDispatcher.navigateTo(ProfileScreen())
+                        else -> Toast.makeText(context, "Bosildi: ${item.label}", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 icon = {
                     Icon(

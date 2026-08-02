@@ -3,26 +3,24 @@ package com.abdullojon.maxwayclone.data.repository
 import com.abdullojon.maxwayclone.data.mapper.toUIData
 import com.abdullojon.maxwayclone.data.source.local.preference.Prefs
 import com.abdullojon.maxwayclone.data.source.remote.api.auth_api.AuthApi
-import com.abdullojon.maxwayclone.data.source.remote.api.main_api.AdsApi
-import com.abdullojon.maxwayclone.data.source.remote.api.main_api.CategoriesApi
-import com.abdullojon.maxwayclone.data.source.remote.api.main_api.ProductsApi
-import com.abdullojon.maxwayclone.data.source.remote.api.main_api.StoriesApi
+import com.abdullojon.maxwayclone.data.source.remote.api.branch_api.BranchesApi
+import com.abdullojon.maxwayclone.data.source.remote.api.main_api.*
+import com.abdullojon.maxwayclone.data.source.remote.api.order_api.OrderApi
+import com.abdullojon.maxwayclone.data.source.remote.dto.request.OrderProductItem
+import com.abdullojon.maxwayclone.data.source.remote.dto.request.OrderRequest
 import com.abdullojon.maxwayclone.data.source.remote.dto.request.RegisterRequest
 import com.abdullojon.maxwayclone.data.source.remote.dto.request.RepeatRequest
+import com.abdullojon.maxwayclone.data.source.remote.dto.request.UpdateUserRequest
 import com.abdullojon.maxwayclone.data.source.remote.dto.request.VerifyRequest
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Ads
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Stories
+import com.abdullojon.maxwayclone.data.source.remote.dto.response.auth.UserData
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
+import com.abdullojon.maxwayclone.data.source.remote.dto.response.order.OrderData
 import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.domain.model.ProductsByCategoryUIData
 import com.abdullojon.maxwayclone.domain.repository.AppRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 class AppRepositoryImpl @Inject constructor(
@@ -31,11 +29,22 @@ class AppRepositoryImpl @Inject constructor(
     private val adsApi: AdsApi,
     private val storiesApi: StoriesApi,
     private val authApi: AuthApi,
+    private val orderApi: OrderApi,
+    private val branchesApi: BranchesApi,
     private val prefs: Prefs
 ): AppRepository {
     private val _cartFlow = MutableStateFlow<Map<Int, Int>>(emptyMap())
     override val cartFlow: StateFlow<Map<Int, Int>> = _cartFlow.asStateFlow()
 
+    private val _newOrderFlow = MutableSharedFlow<OrderData>(replay = 1)
+    override val newOrderFlow = _newOrderFlow.asSharedFlow()
+
+    private val _userDataFlow = MutableStateFlow<UserData?>(null)
+    override val userDataFlow: StateFlow<UserData?> = _userDataFlow.asStateFlow()
+
+    init {
+       // logout()
+    }
     private val products = ArrayList<ProductUIData>()
     override fun getAllCategories(): Flow<Result<List<AllCategories>>> = flow {
         val response=apiCategory.getAllCategory()
@@ -164,4 +173,86 @@ class AppRepositoryImpl @Inject constructor(
         else Result.failure(Exception("Qayta yuborishda xatolik"))
     }
 
+    override suspend fun createOrder(
+        latitude: String,
+        longitude: String,
+        address: String
+    ): Result<OrderData> {
+        val cartItems = cartFlow.value.map { (id, count) ->
+            OrderProductItem(productID = id, count = count)
+        }
+        val request = OrderRequest(
+            ls = cartItems,
+            latitude = latitude,
+            longitude = longitude,
+            address = address
+        )
+        val response = orderApi.createOrder(token = prefs.token ?: "", request = request)
+        return if (response.isSuccessful && response.body() != null) {
+            val newOrder = response.body()!!.data
+            _newOrderFlow.emit(newOrder)
+            Result.success(newOrder)
+        } else {
+            Result.failure(Exception("Buyurtma yaratishda xatolik"))
+        }
+    }
+
+    override fun logout() {
+        prefs.clearUser()
+        _cartFlow.value = emptyMap()
+    }
+
+    override fun getMyOrders(): Flow<Result<List<OrderData>>> =flow{
+        val response = orderApi.getMyOrders(token = prefs.token ?: "")
+        if (response.isSuccessful && response.body() != null) {
+            emit(Result.success(response.body()!!.data))
+        } else {
+            emit(Result.failure(Exception("Xatolik")))
+        }
+    }.catch { emit(Result.failure(it)) }
+
+    override suspend fun getUserInfo(): Result<UserData> {
+        val response = authApi.getUserInfo(token = prefs.token ?: "")
+        return if (response.isSuccessful && response.body() != null) {
+            val userData = response.body()!!.data
+            _userDataFlow.value = userData
+            Result.success(userData)
+        } else {
+            Result.failure(Exception("Foydalanuvchi ma'lumotlarini olishda xatolik"))
+        }
+    }
+
+    override suspend fun updateUserInfo(name: String, birthDate: String): Result<Unit> {
+        val response = authApi.updateUserInfo(
+            token = prefs.token ?: "",
+            body = UpdateUserRequest(name, birthDate)
+        )
+        return if (response.isSuccessful) {
+            // Update local flow with new data
+            val current = _userDataFlow.value
+            _userDataFlow.value = current?.copy(name = name, birthDate = birthDate)
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception("Ma'lumotlarni yangilashda xatolik"))
+        }
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        val response = authApi.deleteAccount(token = prefs.token ?: "")
+        return if (response.isSuccessful) {
+            logout()
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception("Accountni o'chirishda xatolik"))
+        }
+    }
+
+    override fun getBranches(): Flow<Result<List<com.abdullojon.maxwayclone.data.source.remote.dto.response.branches.BranchData>>> = flow {
+        val response = branchesApi.getBranches()
+        if (response.isSuccessful && response.body() != null) {
+            emit(Result.success(response.body()!!.data))
+        } else {
+            emit(Result.failure(Exception("Filiallarni yuklashda xatolik")))
+        }
+    }.catch { emit(Result.failure(it)) }
 }
