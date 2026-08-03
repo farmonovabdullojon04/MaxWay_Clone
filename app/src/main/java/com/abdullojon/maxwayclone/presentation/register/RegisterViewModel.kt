@@ -25,16 +25,41 @@ class RegisterViewModel @Inject constructor(
 
     fun sendCode(onSuccess:()-> Unit)=intent{
         reduce { state.copy(isLoading = true) }
+
         val result=repository.register(state.phone)
+
         reduce { state.copy(isLoading = false) }
         if (result.isSuccess) onSuccess()
     }
 
-    fun verifyCode(onSuccess: () -> Unit)=intent{
+    fun verifyCode(onSuccess: (isNewUser: Boolean) -> Unit)=intent{
         reduce { state.copy(isLoading = true) }
+
         val result=repository.verify(state.phone,state.code.toIntOrNull()?:0)
+
+        if (result.isSuccess){
+            val infoResult=repository.getUserInfo()
+
+            reduce { state.copy(isLoading = false) }
+
+            if (infoResult.isSuccess){
+                val user=infoResult.getOrNull()
+                val isNewUser=user?.name.isNullOrBlank()
+                onSuccess(isNewUser)
+            }else{
+                onSuccess(true)
+            }
+        }else{
+            reduce { state.copy(isLoading = false) }
+        }
+    }
+
+    fun updateNameAndFinish(onSuccess: () -> Unit) = intent {
+        reduce { state.copy(isLoading = true) }
+        repository.updateUserInfo(state.name, "")
         reduce { state.copy(isLoading = false) }
-        if (result.isSuccess) onSuccess()
+        onSuccess()
     }
 
 }
+

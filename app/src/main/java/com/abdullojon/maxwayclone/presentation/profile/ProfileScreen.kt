@@ -72,7 +72,7 @@ fun ProfileScreenContent(
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
-                IconButton(onClick = { 
+                IconButton(onClick = {
                     AppAppNavigationDispatcher.navigateTo(EditProfileScreen())
                 }) {
                     Icon(

@@ -20,6 +20,7 @@ class MyOrdersViewModel @Inject constructor(
     override val container = container<MyOrdersState, Nothing>(MyOrdersState())
 
     init {
+        loadOrders()
         observeNewOrders()
     }
 

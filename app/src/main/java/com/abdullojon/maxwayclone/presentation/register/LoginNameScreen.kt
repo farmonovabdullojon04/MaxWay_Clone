@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.presentation.basket.BasketScreen
 
 class LoginNameScreen: Screen {
     @Composable
@@ -21,7 +22,9 @@ class LoginNameScreen: Screen {
             title = "Имя фамилия",
             buttonText = "Продолжить",
             onButtonClick = {
-                AppAppNavigationDispatcher.back()
+                viewModel.updateNameAndFinish {
+                    AppAppNavigationDispatcher.navigateTo(BasketScreen())
+                }
             }
         ) {
             Text("Имя Фамилия", fontWeight = FontWeight.Bold)

@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.presentation.basket.BasketScreen
 
 class LoginVerifyScreen(private val phone: String) : Screen {
     @Composable
@@ -27,8 +28,12 @@ class LoginVerifyScreen(private val phone: String) : Screen {
             title = "Код подтверждения",
             buttonText = "Продолжить",
             onButtonClick = {
-                viewModel.verifyCode {
-                    AppAppNavigationDispatcher.navigateTo(LoginNameScreen())
+                viewModel.verifyCode { isNewUser->
+                    if (isNewUser){
+                        AppAppNavigationDispatcher.navigateTo(LoginNameScreen())
+                    }else{
+                        AppAppNavigationDispatcher.navigateTo(BasketScreen())
+                    }
                 }
             }
         ) {
