@@ -28,8 +28,16 @@ class RegisterViewModel @Inject constructor(
 
         val result=repository.register(state.phone)
 
-        reduce { state.copy(isLoading = false) }
-        if (result.isSuccess) onSuccess()
+        if (result.isSuccess){
+            reduce { state.copy(isLoading = false) }
+            onSuccess()
+        }else{
+            val repeatResult=repository.repeat(state.phone)
+            reduce { state.copy(isLoading = false) }
+            if (repeatResult.isSuccess){
+                onSuccess()
+            }
+        }
     }
 
     fun verifyCode(onSuccess: (isNewUser: Boolean) -> Unit)=intent{

@@ -24,8 +24,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
-import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher
+import com.abdullojon.maxwayclone.navigation.AppAppNavigationDispatcher.navigateTo
 import com.abdullojon.maxwayclone.presentation.components.main_components.BottomBar
+import com.abdullojon.maxwayclone.presentation.profile.branch.BranchesScreen
+import com.abdullojon.maxwayclone.presentation.profile.service.AboutServiceScreen
+import com.abdullojon.maxwayclone.presentation.profile.service.SettingsScreen
 
 class ProfileScreen : Screen {
     @Composable
@@ -73,7 +76,7 @@ fun ProfileScreenContent(
                     )
                 }
                 IconButton(onClick = {
-                    AppAppNavigationDispatcher.navigateTo(EditProfileScreen())
+                    navigateTo(EditProfileScreen())
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.Edit,
@@ -95,19 +98,19 @@ fun ProfileScreenContent(
                 ProfileMenuItem(
                     icon = Icons.Outlined.LocationOn,
                     label = "Филиалы",
-                    onClick = { AppAppNavigationDispatcher.navigateTo(BranchesScreen()) }
+                    onClick = { navigateTo(BranchesScreen()) }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF7F7F7))
                 ProfileMenuItem(
                     icon = Icons.Outlined.Settings,
                     label = "Настройки",
-                    onClick = { /* Settings */ }
+                    onClick = { navigateTo(SettingsScreen()) }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFF7F7F7))
                 ProfileMenuItem(
                     icon = Icons.Outlined.Info,
                     label = "О сервисе",
-                    onClick = { /* About service */ }
+                    onClick = { navigateTo(AboutServiceScreen()) }
                 )
             }
         }

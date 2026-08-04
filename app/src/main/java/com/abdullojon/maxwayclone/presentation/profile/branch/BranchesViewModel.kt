@@ -1,4 +1,4 @@
-package com.abdullojon.maxwayclone.presentation.profile
+package com.abdullojon.maxwayclone.presentation.profile.branch
 
 import androidx.lifecycle.ViewModel
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.branches.BranchData
