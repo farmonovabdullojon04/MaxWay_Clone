@@ -9,6 +9,12 @@ data class AuthResponse<T>(
 )
 
 @Serializable
+data class RegisterResponse(
+    val phone: String,
+    val code: Int
+)
+
+@Serializable
 data class TokenResponse(
     val token: String
 )

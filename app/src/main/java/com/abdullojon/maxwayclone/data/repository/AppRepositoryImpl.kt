@@ -1,5 +1,6 @@
 package com.abdullojon.maxwayclone.data.repository
 
+import android.content.Context
 import com.abdullojon.maxwayclone.data.mapper.toUIData
 import com.abdullojon.maxwayclone.data.source.local.preference.Prefs
 import com.abdullojon.maxwayclone.data.source.remote.api.auth_api.AuthApi
@@ -14,12 +15,14 @@ import com.abdullojon.maxwayclone.data.source.remote.dto.request.UpdateUserReque
 import com.abdullojon.maxwayclone.data.source.remote.dto.request.VerifyRequest
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Ads
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.ads_stories.Stories
+import com.abdullojon.maxwayclone.data.source.remote.dto.response.auth.RegisterResponse
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.auth.UserData
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.categories.AllCategories
 import com.abdullojon.maxwayclone.data.source.remote.dto.response.order.OrderData
 import com.abdullojon.maxwayclone.domain.model.ProductUIData
 import com.abdullojon.maxwayclone.domain.model.ProductsByCategoryUIData
 import com.abdullojon.maxwayclone.domain.repository.AppRepository
+import com.abdullojon.maxwayclone.util.NotificationHelper
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
@@ -31,7 +34,8 @@ class AppRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val orderApi: OrderApi,
     private val branchesApi: BranchesApi,
-    private val prefs: Prefs
+    private val prefs: Prefs,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ): AppRepository {
     private val _cartFlow = MutableStateFlow<Map<Int, Int>>(emptyMap())
     override val cartFlow: StateFlow<Map<Int, Int>> = _cartFlow.asStateFlow()
@@ -143,34 +147,53 @@ class AppRepositoryImpl @Inject constructor(
 
     override fun isUserLoggedIn(): Boolean=prefs.isLoggedIn
 
-    override suspend fun register(
-        phone: String
-    ): Result<Unit> {
-        val response=authApi.register(RegisterRequest(phone))
-        return if (response.isSuccessful) Result.success(Unit)
-        else Result.failure(Exception("Xatolik: ${response.code()}"))
+    override suspend fun register(phone: String): Result<Unit> {
+        return try {
+            val response = authApi.register(RegisterRequest(phone))
+            if (response.isSuccessful && response.body() != null) {
+                val registerData: RegisterResponse = response.body()!!.data
+                NotificationHelper.showSmsNotification(context, registerData.code.toString())
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Xatolik: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun verify(
         phone: String,
         code: Int
     ): Result<String> {
-        val response=authApi.verify(VerifyRequest(phone,code))
-        if (response.isSuccessful && response.body()!=null){
-            val token = response.body()!!.data.token
-            prefs.token = token
-            prefs.isLoggedIn = true
-            return Result.success(token)
+        return try {
+            val response = authApi.verify(VerifyRequest(phone, code))
+            if (response.isSuccessful && response.body() != null) {
+                val token = response.body()!!.data.token
+                prefs.token = token
+                prefs.isLoggedIn = true
+                Result.success(token)
+            } else {
+                Result.failure(Exception("Tasdiqlashda xatolik"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-        return Result.failure(Exception("Tasdiqlashda xatolik"))
     }
 
-    override suspend fun repeat(
-        phone: String
-    ): Result<Unit> {
-       val response=authApi.repeat(RepeatRequest(phone))
-        return if (response.isSuccessful) Result.success(Unit)
-        else Result.failure(Exception("Qayta yuborishda xatolik"))
+    override suspend fun repeat(phone: String): Result<Unit> {
+        return try {
+            val response = authApi.repeat(RepeatRequest(phone))
+            if (response.isSuccessful && response.body() != null) {
+                val registerData: RegisterResponse = response.body()!!.data
+                NotificationHelper.showSmsNotification(context, registerData.code.toString())
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Qayta yuborishda xatolik"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun createOrder(
@@ -178,28 +201,33 @@ class AppRepositoryImpl @Inject constructor(
         longitude: String,
         address: String
     ): Result<OrderData> {
-        val cartItems = cartFlow.value.map { (id, count) ->
-            OrderProductItem(productID = id, count = count)
-        }
-        val request = OrderRequest(
-            ls = cartItems,
-            latitude = latitude,
-            longitude = longitude,
-            address = address
-        )
-        val response = orderApi.createOrder(token = prefs.token ?: "", request = request)
-        return if (response.isSuccessful && response.body() != null) {
-            val newOrder = response.body()!!.data
-            _newOrderFlow.emit(newOrder)
-            Result.success(newOrder)
-        } else {
-            Result.failure(Exception("Buyurtma yaratishda xatolik"))
+        return try {
+            val cartItems = cartFlow.value.map { (id, count) ->
+                OrderProductItem(productID = id, count = count)
+            }
+            val request = OrderRequest(
+                ls = cartItems,
+                latitude = latitude,
+                longitude = longitude,
+                address = address
+            )
+            val response = orderApi.createOrder(token = prefs.token ?: "", request = request)
+            if (response.isSuccessful && response.body() != null) {
+                val newOrder = response.body()!!.data
+                _newOrderFlow.emit(newOrder)
+                Result.success(newOrder)
+            } else {
+                Result.failure(Exception("Buyurtma yaratishda xatolik"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     override fun logout() {
         prefs.clearUser()
         _cartFlow.value = emptyMap()
+        _userDataFlow.value = null
     }
 
     override fun getMyOrders(): Flow<Result<List<OrderData>>> =flow{
@@ -212,38 +240,50 @@ class AppRepositoryImpl @Inject constructor(
     }.catch { emit(Result.failure(it)) }
 
     override suspend fun getUserInfo(): Result<UserData> {
-        val response = authApi.getUserInfo(token = prefs.token ?: "")
-        return if (response.isSuccessful && response.body() != null) {
-            val userData = response.body()!!.data
-            _userDataFlow.value = userData
-            Result.success(userData)
-        } else {
-            Result.failure(Exception("Foydalanuvchi ma'lumotlarini olishda xatolik"))
+        return try {
+            val response = authApi.getUserInfo(token = prefs.token ?: "")
+            if (response.isSuccessful && response.body() != null) {
+                val userData = response.body()!!.data
+                _userDataFlow.value = userData
+                Result.success(userData)
+            } else {
+                Result.failure(Exception("Foydalanuvchi ma'lumotlarini olishda xatolik"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     override suspend fun updateUserInfo(name: String, birthDate: String): Result<Unit> {
-        val response = authApi.updateUserInfo(
-            token = prefs.token ?: "",
-            body = UpdateUserRequest(name, birthDate)
-        )
-        return if (response.isSuccessful) {
-            // Update local flow with new data
-            val current = _userDataFlow.value
-            _userDataFlow.value = current?.copy(name = name, birthDate = birthDate)
-            Result.success(Unit)
-        } else {
-            Result.failure(Exception("Ma'lumotlarni yangilashda xatolik"))
+        return try {
+            val response = authApi.updateUserInfo(
+                token = prefs.token ?: "",
+                body = UpdateUserRequest(name, birthDate)
+            )
+            if (response.isSuccessful) {
+                // Update local flow with new data
+                val current = _userDataFlow.value
+                _userDataFlow.value = current?.copy(name = name, birthDate = birthDate)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Ma'lumotlarni yangilashda xatolik"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     override suspend fun deleteAccount(): Result<Unit> {
-        val response = authApi.deleteAccount(token = prefs.token ?: "")
-        return if (response.isSuccessful) {
-            logout()
-            Result.success(Unit)
-        } else {
-            Result.failure(Exception("Accountni o'chirishda xatolik"))
+        return try {
+            val response = authApi.deleteAccount(token = prefs.token ?: "")
+            if (response.isSuccessful) {
+                logout()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Accountni o'chirishda xatolik"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
