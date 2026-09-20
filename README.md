@@ -75,18 +75,13 @@ app/src/main/java/com/abdullojon/maxwayclone/
 ├── di/                  # Hilt modullari
 └── util/                # Yordamchi klasslar (masalan, LocaleHelper)
 ```
-
-
-
-
-
-## 🖼 video
 <img width="240" height="531" alt="Image" src="https://github.com/user-attachments/assets/da3069d2-66e2-4b4e-934d-7eafbab78229" />
+
+
+
+
+
 ---
-
-
-
-
 
 ## 🖼 Ekran suratlari
 <img width="360" height="780" alt="image" src="https://github.com/user-attachments/assets/b840db5e-30a9-4484-9a14-ea1620ba664f" />
