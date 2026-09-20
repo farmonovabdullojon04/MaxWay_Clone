@@ -76,6 +76,8 @@ app/src/main/java/com/abdullojon/maxwayclone/
 └── util/                # Yordamchi klasslar (masalan, LocaleHelper)
 ```
 
+## 🖼 video
+<img width="240" height="531" alt="Image" src="https://github.com/user-attachments/assets/da3069d2-66e2-4b4e-934d-7eafbab78229" />
 ---
 
 ## 🖼 Ekran suratlari
